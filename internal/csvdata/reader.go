@@ -4,13 +4,15 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"math"
+	"math/big"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
 
 var expectedHeader = []string{"campaign_id", "date", "impressions", "clicks", "spend", "conversions"}
+var decimalNumber = regexp.MustCompile(`^[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?$`)
 
 // ReadEach streams a header-bearing CSV and calls visit for each valid record.
 // It stops at the first malformed row and includes its logical row number in
@@ -80,9 +82,13 @@ func parseRecord(fields []string) (Record, error) {
 	if record.Clicks, err = parseInteger("clicks", fields[3]); err != nil {
 		return record, err
 	}
-	record.Spend, err = strconv.ParseFloat(fields[4], 64)
-	if err != nil || math.IsNaN(record.Spend) || math.IsInf(record.Spend, 0) {
-		return record, fmt.Errorf("field spend %q is not a finite number", fields[4])
+	if !decimalNumber.MatchString(fields[4]) {
+		return record, fmt.Errorf("field spend %q is not a valid decimal number", fields[4])
+	}
+	var ok bool
+	record.Spend, ok = new(big.Rat).SetString(fields[4])
+	if !ok {
+		return record, fmt.Errorf("field spend %q is not a valid decimal number", fields[4])
 	}
 	if record.Conversions, err = parseInteger("conversions", fields[5]); err != nil {
 		return record, err

@@ -65,3 +65,20 @@
 > - Báo cáo file đã sửa, quyết định kỹ thuật, kết quả test và các vấn đề còn tồn tại.
 > Chỉ báo cáo test thành công nếu thực sự chạy đúng.
 
+> Hãy review repository như một reviewer độc lập. Đọc README.md và IMPLEMENTATION_PLAN.md, sau đó kiểm tra code và test hiện có.
+>
+> Ưu tiên tìm:
+>
+> 1. Sai logic aggregation, CTR, CPA hoặc ranking.
+> 2. Lỗi khi impressions hoặc conversions bằng 0.
+> 3. Sai lệch độ chính xác khi cộng spend.
+> 4. Lỗi xử lý header, quoted CSV fields, dòng lỗi và file rỗng.
+> 5. Bộ nhớ tăng theo số dòng thay vì số campaign.
+> 6. Tài nguyên không được đóng, file output bị ghi dở hoặc lỗi bị nuốt.
+> 7. Test thiếu hoặc test không thực sự kiểm chứng kết quả.
+>
+> Chưa sửa code. Trả về từng phát hiện gồm mức độ nghiêm trọng, vị trí, cách tái hiện và đề xuất sửa. Phân biệt lỗi đã xác minh với rủi ro giả định.
+
+> - Spend và CPA được xuất với hai chữ số thập phân. Nếu input hợp lệ có độ chính xác vượt quá cent, phần hiển thị bị làm tròn; README cũng không nói không được tính trường hợp này, vậy thì hãy triển khai thêm.
+> - Những giả định khác chưa cần làm.
+

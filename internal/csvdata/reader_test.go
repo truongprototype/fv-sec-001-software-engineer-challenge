@@ -1,6 +1,7 @@
 package csvdata
 
 import (
+	"math/big"
 	"strings"
 	"testing"
 )
@@ -17,7 +18,7 @@ func TestReadEachStreamsValidRecords(t *testing.T) {
 	if len(records) != 2 {
 		t.Fatalf("got %d records, want 2", len(records))
 	}
-	if records[0].CampaignID != "CMP,001" || records[0].Spend != 45.5 || records[0].Conversions != 12 {
+	if records[0].CampaignID != "CMP,001" || records[0].Spend.Cmp(big.NewRat(455, 10)) != 0 || records[0].Conversions != 12 {
 		t.Errorf("first record = %#v", records[0])
 	}
 	if records[1].CampaignID != "CMP002" {
@@ -34,12 +35,19 @@ func TestReadEachRejectsInvalidInput(t *testing.T) {
 		{"invalid date", "campaign_id,date,impressions,clicks,spend,conversions\nA,2025-02-30,1,1,1,1\n", "parse CSV row 2"},
 		{"invalid integer", "campaign_id,date,impressions,clicks,spend,conversions\nA,2025-01-01,1.5,1,1,1\n", "field impressions"},
 		{"integer overflow", "campaign_id,date,impressions,clicks,spend,conversions\nA,2025-01-01,9223372036854775808,1,1,1\n", "field impressions"},
-		{"invalid float", "campaign_id,date,impressions,clicks,spend,conversions\nA,2025-01-01,1,1,NaN,1\n", "finite number"},
+		{"invalid decimal", "campaign_id,date,impressions,clicks,spend,conversions\nA,2025-01-01,1,1,NaN,1\n", "valid decimal number"},
+		{"high precision decimal", "campaign_id,date,impressions,clicks,spend,conversions\nA,2025-01-01,1,1,0.1234567890123456789,1\n", ""},
 		{"wrong field count", "campaign_id,date,impressions,clicks,spend,conversions\nA,2025-01-01,1,1,1\n", "read CSV row 2"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err := ReadEach(strings.NewReader(test.input), func(Record) error { return nil })
+			if test.wantError == "" {
+				if err != nil {
+					t.Fatalf("ReadEach() error = %v, want success", err)
+				}
+				return
+			}
 			if err == nil || !strings.Contains(err.Error(), test.wantError) {
 				t.Fatalf("ReadEach() error = %v, want containing %q", err, test.wantError)
 			}
@@ -58,6 +66,22 @@ func TestReadEachPropagatesVisitorError(t *testing.T) {
 func TestReadEachRequiresVisitor(t *testing.T) {
 	if err := ReadEach(strings.NewReader(""), nil); err == nil || !strings.Contains(err.Error(), "visitor") {
 		t.Fatalf("ReadEach(nil visitor) error = %v", err)
+	}
+}
+
+func TestReadEachPreservesSpendBeyondCents(t *testing.T) {
+	input := "campaign_id,date,impressions,clicks,spend,conversions\nA,2025-01-01,1,1,0.1234567890123456789,1\n"
+	var got *big.Rat
+	err := ReadEach(strings.NewReader(input), func(record Record) error {
+		got = record.Spend
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("ReadEach() error = %v", err)
+	}
+	want, _ := new(big.Rat).SetString("0.1234567890123456789")
+	if got == nil || got.Cmp(want) != 0 {
+		t.Fatalf("parsed spend = %v, want exact %s", got, want.RatString())
 	}
 }
 

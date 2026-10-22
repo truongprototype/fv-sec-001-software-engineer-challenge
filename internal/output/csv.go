@@ -4,9 +4,11 @@ package output
 import (
 	"encoding/csv"
 	"fmt"
+	"math/big"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"adaggregator/internal/aggregate"
 )
@@ -52,7 +54,7 @@ func writeFile(path string, metrics []aggregate.Metrics) (returnErr error) {
 		campaign := item.Campaign
 		cpa := ""
 		if item.HasCPA {
-			cpa = strconv.FormatFloat(item.CPA, 'f', 2, 64)
+			cpa = formatDecimal(item.CPA, 2, 18)
 		}
 		ctr := ""
 		if item.HasCTR {
@@ -62,7 +64,7 @@ func writeFile(path string, metrics []aggregate.Metrics) (returnErr error) {
 			campaign.ID,
 			strconv.FormatInt(campaign.Impressions, 10),
 			strconv.FormatInt(campaign.Clicks, 10),
-			strconv.FormatFloat(campaign.Spend, 'f', 2, 64),
+			formatDecimal(campaign.Spend, 2, 0),
 			strconv.FormatInt(campaign.Conversions, 10),
 			ctr,
 			cpa,
@@ -76,4 +78,46 @@ func writeFile(path string, metrics []aggregate.Metrics) (returnErr error) {
 		return fmt.Errorf("flush output %q: %w", path, err)
 	}
 	return nil
+}
+
+// formatDecimal preserves terminating decimals up to maxPlaces fractional
+// digits. Values requiring more places are rounded; trailing zeroes are
+// removed without going below minPlaces. A non-positive maxPlaces is unbounded.
+func formatDecimal(value *big.Rat, minPlaces, maxPlaces int) string {
+	if value == nil || value.Sign() == 0 {
+		return "0"
+	}
+	denominator := new(big.Int).Set(value.Denom())
+	two, five := big.NewInt(2), big.NewInt(5)
+	twoCount, fiveCount := 0, 0
+	for new(big.Int).Mod(denominator, two).Sign() == 0 {
+		denominator.Div(denominator, two)
+		twoCount++
+	}
+	for new(big.Int).Mod(denominator, five).Sign() == 0 {
+		denominator.Div(denominator, five)
+		fiveCount++
+	}
+	places := twoCount
+	if fiveCount > places {
+		places = fiveCount
+	}
+	if places < minPlaces {
+		places = minPlaces
+	}
+	if maxPlaces > 0 && (denominator.Cmp(big.NewInt(1)) != 0 || places > maxPlaces) {
+		places = maxPlaces
+	}
+	formatted := value.FloatString(places)
+	if decimalPoint := strings.IndexByte(formatted, '.'); decimalPoint >= 0 {
+		fractionalPlaces := len(formatted) - decimalPoint - 1
+		for fractionalPlaces > minPlaces && strings.HasSuffix(formatted, "0") {
+			formatted = strings.TrimSuffix(formatted, "0")
+			fractionalPlaces--
+		}
+		if fractionalPlaces == 0 {
+			formatted = strings.TrimSuffix(formatted, ".")
+		}
+	}
+	return formatted
 }
