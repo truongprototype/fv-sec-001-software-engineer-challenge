@@ -82,3 +82,39 @@
 > - Spend và CPA được xuất với hai chữ số thập phân. Nếu input hợp lệ có độ chính xác vượt quá cent, phần hiển thị bị làm tròn; README cũng không nói không được tính trường hợp này, vậy thì hãy triển khai thêm.
 > - Những giả định khác chưa cần làm.
 
+> Chuẩn bị benchmark cho ứng dụng Ad Performance Aggregator.
+>
+> Yêu cầu:
+>
+> 1. Xác minh kết quả bằng fixture nhỏ có expected output đã biết.
+> 2. Benchmark file thực tế (ad_data.csv); ghi rõ kích thước file, số dòng, số campaign, môi trường và phiên bản Go.
+> 3. Đo wall-clock time và peak memory bằng công cụ phù hợp.
+> 4. Phân biệt thời gian xử lý ứng dụng với thời gian tạo dữ liệu hoặc giải nén.
+> 5. Lưu lệnh chạy, stdout/stderr và kết quả đo vào thư mục benchmarks/.
+> 6. Nếu hiệu năng chưa tốt, phân tích nguyên nhân trước khi thay đổi code.
+> 7. Sau mỗi tối ưu, chạy lại toàn bộ test và so sánh kết quả đầu ra với bản trước.
+>
+> Không bịa số liệu benchmark. Nếu chưa chạy được trên file thực, ghi rõ benchmark chỉ là thử nghiệm trên dữ liệu nhỏ.
+
+> Hãy bổ sung khả năng thu thập CPU profile cho ứng dụng Go Ad Performance Aggregator để xác định nguyên nhân tiêu thụ CPU.
+>
+> Bối cảnh:
+>
+> - Ứng dụng xử lý CSV khoảng 1 GB theo streaming.
+> - Có khoảng 50 campaign.
+> - User CPU time gần bằng wall-clock time.
+> - Hiện tại chưa có CPU profile và chưa được phép tối ưu code.
+>
+> Yêu cầu:
+>
+> 1. Kiểm tra cấu trúc dự án và cách chạy CLI hiện tại trước khi thay đổi.
+> 2. Ưu tiên sử dụng runtime/pprof và go tool pprof của Go standard toolchain.
+> 3. Đề xuất cách thu CPU profile trong một lần chạy benchmark trên file thực tế. Ưu tiên phương án ít ảnh hưởng đến code và không thay đổi logic xử lý.
+> 4. Nếu cần sửa code, hãy thêm cơ chế profiling tùy chọn, chẳng hạn cờ --cpuprofile, chỉ bật khi người dùng yêu cầu. Phải start và stop profile đúng cách, đóng file an toàn và xử lý lỗi.
+> 5. Không bật profiling mặc định. Không thay đổi thuật toán aggregation, CSV parsing, kiểu số hay luồng xử lý.
+> 6. Chạy gofmt, go test ./... và go vet ./... nếu môi trường cho phép.
+> 7. Hướng dẫn chính xác cách build, chạy benchmark với profile, xem top CPU functions và tạo call graph hoặc flame graph nếu công cụ hỗ trợ.
+> 8. Không tự kết luận nguyên nhân chậm trước khi có profile thực tế.
+>
+> Hãy báo cáo kế hoạch trước, sau đó mới thực hiện các thay đổi tối thiểu cần thiết.
+

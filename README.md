@@ -17,6 +17,8 @@ go build -o aggregator ./cmd/aggregator
 
 The command streams the input CSV, aggregates by campaign ID, and writes `top10_ctr.csv` and `top10_cpa.csv` in the output directory. It requires the CSV header and column order shown below. Malformed rows fail the run with row context. Undefined CPA values in the CTR ranking are written as empty CSV fields. Spend is parsed and summed as an exact decimal rational, then exported with at least two decimal places and any additional fractional digits needed to preserve its value. CPA is ranked as an exact rational and exported with at least two decimal places and up to 18 fractional places; results requiring more than 18 places, including repeating decimals, are rounded to 18 places. CTR is formatted to four decimal places.
 
+Optional CPU profiling is available with `--cpuprofile FILE`. It is disabled unless the flag is supplied. See [benchmarks/README.md](benchmarks/README.md#cpu-profile) for a reproducible profile run and analysis commands.
+
 ## Introduction
 This is a data processing challenge for Developer candidates applying to our company.  
 You will work with a large CSV dataset (~1GB) containing advertising performance records.

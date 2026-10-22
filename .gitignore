@@ -1,7 +1,11 @@
+# IDE
+.DS_Store
+
 # Go build artifacts
 /aggregator
 /aggregator.exe
 /bin/
+/benchmarks/aggregator
 
 # Generated challenge output
 /results/top10_ctr.csv

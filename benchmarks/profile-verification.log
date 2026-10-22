@@ -1,0 +1,8 @@
+$ GOCACHE=/private/tmp/go-build-cache go test ./...
+?   	adaggregator/benchmarks	[no test files]
+ok  	adaggregator/cmd/aggregator	0.812s
+ok  	adaggregator/internal/aggregate	(cached)
+ok  	adaggregator/internal/app	(cached)
+ok  	adaggregator/internal/csvdata	(cached)
+ok  	adaggregator/internal/output	(cached)
+$ GOCACHE=/private/tmp/go-build-cache go vet ./...

@@ -1,0 +1,7 @@
+command=/Users/truong/Projects/fv-sec-001-truong.prototype@gmail.com/benchmarks/aggregator --input /Users/truong/Projects/fv-sec-001-truong.prototype@gmail.com/ad_data.csv --output /Users/truong/Projects/fv-sec-001-truong.prototype@gmail.com/benchmarks/profile-results --cpuprofile /Users/truong/Projects/fv-sec-001-truong.prototype@gmail.com/benchmarks/ad_data.cpu.pprof
+wall_seconds=22.423
+peak_rss_bytes=12206080
+peak_rss_source=getrusage(RUSAGE_CHILDREN).ru_maxrss
+user_cpu_seconds=22.248
+system_cpu_seconds=0.999
+exit_code=0
