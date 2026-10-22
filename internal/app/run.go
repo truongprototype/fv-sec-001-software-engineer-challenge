@@ -6,12 +6,17 @@ import (
 
 	"adaggregator/internal/aggregate"
 	"adaggregator/internal/csvdata"
+	"adaggregator/internal/output"
 )
 
-// Run validates the input path and prepares the output directory. The data
-// processing workflow is intentionally a scaffold for the next implementation step.
+// Run streams the input CSV, aggregates by campaign, and writes both rankings.
 func Run(inputPath, outputDir string) error {
-	info, err := os.Stat(inputPath)
+	input, err := os.Open(inputPath)
+	if err != nil {
+		return fmt.Errorf("open input %q: %w", inputPath, err)
+	}
+	defer input.Close()
+	info, err := input.Stat()
 	if err != nil {
 		return fmt.Errorf("inspect input %q: %w", inputPath, err)
 	}
@@ -22,7 +27,11 @@ func Run(inputPath, outputDir string) error {
 		return fmt.Errorf("create output directory %q: %w", outputDir, err)
 	}
 
-	_ = aggregate.New()
-	_ = csvdata.Record{}
-	return nil
+	aggregator := aggregate.New()
+	if err := csvdata.ReadEach(input, func(record csvdata.Record) error {
+		return aggregator.Add(record)
+	}); err != nil {
+		return fmt.Errorf("aggregate input %q: %w", inputPath, err)
+	}
+	return output.WriteRankings(outputDir, aggregator.TopCTR(10), aggregator.TopCPA(10))
 }

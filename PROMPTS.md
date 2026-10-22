@@ -13,8 +13,6 @@
 >
 > Tạo IMPLEMENTATION_PLAN.md. Phân biệt yêu cầu bắt buộc với đề xuất của bạn. Không tự ý bổ sung tính năng ngoài phạm vi.
 
-<br>
-
 > Các đề xuất trong  IMPLEMENTATION_PLAN.md đã được duyệt, hãy tạo bộ khung dự án Go.
 > Yêu cầu:
 >
@@ -27,4 +25,43 @@
 > - Thêm .gitignore và hướng dẫn chạy cơ bản.
 > Chỉ triển khai bộ khung, có thể chưa cần tối ưu hiệu năng. Chạy gofmt, go vet và go test ./...; báo rõ lệnh nào đã chạy và kết quả thực tế.
 
-<br>
+> Triển khai riêng phần "3A — CSV reader và aggregator" theo IMPLEMENTATION_PLAN.md.
+>
+> Điều kiện:
+>
+> - Chỉ sửa những file cần thiết cho phần này.
+> - Viết unit test cho logic mới và các trường hợp biên.
+> - Không thay đổi hành vi đã được kiểm thử ở các phần trước nếu không có lý do.
+> - Không tối ưu vi mô khi chưa có benchmark.
+> - Không thêm dependency nếu thư viện chuẩn đáp ứng yêu cầu.
+> - Chạy gofmt, go vet và go test ./... sau khi hoàn thành.
+> - Báo cáo file đã sửa, quyết định kỹ thuật, kết quả test và các vấn đề còn tồn tại.
+>
+> Chỉ báo cáo test thành công nếu thực sự chạy đúng.
+
+> Triển khai riêng phần "3B — Metrics và ranking" theo IMPLEMENTATION_PLAN.md.
+>
+> Điều kiện:
+>
+> - Chỉ sửa những file cần thiết cho phần này.
+> - Viết unit test cho logic mới và các trường hợp biên.
+> - Không thay đổi hành vi đã được kiểm thử ở các phần trước nếu không có lý do.
+> - Không tối ưu vi mô khi chưa có benchmark.
+> - Không thêm dependency nếu thư viện chuẩn đáp ứng yêu cầu.
+> - Chạy gofmt, go vet và go test ./... sau khi hoàn thành.
+> - Báo cáo file đã sửa, quyết định kỹ thuật, kết quả test và các vấn đề còn tồn tại.
+> Chỉ báo cáo test thành công nếu thực sự chạy đúng.
+
+> Triển khai riêng phần "3C — CSV writer và CLI integration" theo IMPLEMENTATION_PLAN.md.
+>
+> Điều kiện:
+>
+> - Chỉ sửa những file cần thiết cho phần này.
+> - Viết unit test cho logic mới và các trường hợp biên.
+> - Không thay đổi hành vi đã được kiểm thử ở các phần trước nếu không có lý do.
+> - Không tối ưu vi mô khi chưa có benchmark.
+> - Không thêm dependency nếu thư viện chuẩn đáp ứng yêu cầu.
+> - Chạy gofmt, go vet và go test ./... sau khi hoàn thành.
+> - Báo cáo file đã sửa, quyết định kỹ thuật, kết quả test và các vấn đề còn tồn tại.
+> Chỉ báo cáo test thành công nếu thực sự chạy đúng.
+

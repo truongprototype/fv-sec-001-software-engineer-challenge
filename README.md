@@ -2,7 +2,7 @@
 
 ## Go scaffold quick start
 
-This repository contains an initial Go project scaffold using only the standard library. From the repository root, validate the CLI arguments with:
+This repository contains a Go CLI using only the standard library. From the repository root, process the CSV with:
 
 ```bash
 go run ./cmd/aggregator --input ad_data.csv --output results/
@@ -15,7 +15,7 @@ go build -o aggregator ./cmd/aggregator
 ./aggregator --input ad_data.csv --output results/
 ```
 
-The scaffold validates the required flags and input path and creates the output directory. CSV parsing, aggregation, ranking, and result generation are not implemented yet.
+The command streams the input CSV, aggregates by campaign ID, and writes `top10_ctr.csv` and `top10_cpa.csv` in the output directory. It requires the CSV header and column order shown below. Malformed rows fail the run with row context. Undefined CPA values in the CTR ranking are written as empty CSV fields. Spend and CPA are formatted to two decimal places; CTR is formatted to four decimal places.
 
 ## Introduction
 This is a data processing challenge for Developer candidates applying to our company.  
