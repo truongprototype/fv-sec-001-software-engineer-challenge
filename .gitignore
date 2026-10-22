@@ -1,2 +1,11 @@
-generator
-ad_data.csv
+# Go build artifacts
+/aggregator
+/aggregator.exe
+/bin/
+
+# Generated challenge output
+/results/top10_ctr.csv
+/results/top10_cpa.csv
+
+# Local input dataset
+/ad_data.csv

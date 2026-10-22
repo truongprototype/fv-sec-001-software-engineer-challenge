@@ -1,5 +1,22 @@
 # FV-SEC001 - Software Engineer Challenge — Ad Performance Aggregator
 
+## Go scaffold quick start
+
+This repository contains an initial Go project scaffold using only the standard library. From the repository root, validate the CLI arguments with:
+
+```bash
+go run ./cmd/aggregator --input ad_data.csv --output results/
+```
+
+Build a standalone binary with:
+
+```bash
+go build -o aggregator ./cmd/aggregator
+./aggregator --input ad_data.csv --output results/
+```
+
+The scaffold validates the required flags and input path and creates the output directory. CSV parsing, aggregation, ranking, and result generation are not implemented yet.
+
 ## Introduction
 This is a data processing challenge for Developer candidates applying to our company.  
 You will work with a large CSV dataset (~1GB) containing advertising performance records.
