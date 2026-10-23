@@ -28,11 +28,7 @@ To target a different OS or architecture, set `GOOS` and `GOARCH` to the desired
 
 The output directory is created when needed. Existing result files are replaced. The command writes `top10_ctr.csv` and `top10_cpa.csv` there. Both `--input` and `--output` are required; invalid arguments, unreadable input, malformed CSV, and processing or output errors are reported to stderr with a nonzero exit status.
 
-To get the input data, place `ad_data.csv` in the repository root. If starting from the supplied archive, extract it before running:
-
-```sh
-unzip ad_data.csv.zip
-```
+The large input dataset is not stored in this repository. Place `ad_data.csv` in the repository root before running; `.gitignore` excludes it from commits.
 
 ## Input and output
 
