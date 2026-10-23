@@ -131,3 +131,48 @@
 > - Kiểm tra các file bắt buộc và chất lượng Git diff.
 >
 > Không đưa số liệu chưa đo hoặc kết quả chưa xác minh vào tài liệu. Kết thúc bằng checklist bàn giao và các giới hạn còn tồn tại.
+
+> Hãy bổ sung Dockerfile cho dự án Go Ad Performance Aggregator hiện tại và thực sự kiểm tra khả năng build, chạy ứng dụng trong Docker.
+>
+> ## 1. Tạo Dockerfile
+> - Ưu tiên multi-stage build: dùng Go image để biên dịch và một runtime image nhỏ để chạy binary.
+> - Ưu tiên Docker official images và phiên bản Go phù hợp với go.mod của dự án.
+> - Build binary phù hợp với môi trường container Linux.
+> - Nếu không cần thiết, không đưa source code, Git history hoặc dữ liệu CSV vào runtime image.
+> - Sử dụng .dockerignore để loại trừ các file không cần thiết.
+> - Không chạy ứng dụng bằng root nếu có thể cấu hình non-root user mà không làm hỏng chức năng.
+> - Thiết kế để file input và thư mục output được truyền qua bind mount hoặc volume.
+> - Không copy dữ liệu quảng cáo dung lượng khoảng 1 GB vào image.
+>
+> ## 2. Build image
+> Chọn tên image nhất quán. Nếu build thất bại, tìm nguyên nhân, sửa trong phạm vi cần thiết rồi build lại. Không tuyên bố thành công nếu chưa chạy lệnh và xác nhận kết quả.
+>
+> ## 3. Chạy thử trong Docker
+> - Tạo hoặc sử dụng fixture CSV nhỏ có expected output được xác định độc lập.
+> - Chạy container với file input được mount ở chế độ chỉ đọc và thư mục output được mount để lấy kết quả ra host.
+> - Kiểm tra exit code, log, các file CSV đầu ra, header, số dòng và nội dung so với expected output.
+> - Kiểm tra ít nhất một trường hợp lỗi phù hợp, ví dụ input không tồn tại hoặc tham số không hợp lệ.
+> - Không dùng file CSV giả để tuyên bố đã kiểm thử hiệu năng trên dữ liệu 1 GB.
+>
+> ## 4. Kiểm tra chất lượng
+> - Chạy go test ./..., go vet ./... và gofmt nếu có thay đổi code Go.
+> - Xác minh Docker build có thể tái lập theo hướng dẫn trong README.
+> - Kiểm tra container không phụ thuộc vào file hoặc đường dẫn chỉ tồn tại trên máy thật.
+> - Không sửa thuật toán aggregation hay tối ưu hiệu năng ngoài phạm vi yêu cầu.
+>
+> ## 5. Cập nhật tài liệu
+> Cập nhật README.md với:
+> - Thêm Docker.
+> - Lệnh build image.
+> - Lệnh chạy container với input/output mount.
+> - Cách chạy test.
+> - Các giới hạn hoặc lưu ý về quyền truy cập thư mục và file.
+>
+> ## 6. Báo cáo cuối
+> Sau khi thực hiện, hãy báo cáo:
+> - File đã tạo hoặc sửa.
+> - Docker image và chiến lược build.
+> - Các lệnh thực tế đã chạy cùng kết quả.
+> - Kết quả kiểm tra output với expected output.
+> - Các test đã chạy và kết quả.
+> - Những việc chưa thể kiểm chứng hoặc còn tồn tại.

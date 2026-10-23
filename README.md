@@ -84,6 +84,37 @@ A checked-in small fixture with expected outputs can be verified with:
 sh benchmarks/run_fixture.sh
 ```
 
+## Docker
+
+Build the Linux image from the repository root. The multi-stage build compiles a static Linux binary with Go 1.22, then copies only that binary into the small Alpine runtime image. The image does not contain the source tree, Git history, benchmark files, or CSV data. The container runs as UID/GID 10001 by default.
+
+```sh
+docker build -t ad-performance-aggregator:local .
+```
+
+Pass the input file as a read-only bind mount and mount a writable output directory from the host:
+
+```sh
+mkdir -p results
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  --mount "type=bind,source=$PWD/ad_data.csv,target=/data/ad_data.csv,readonly" \
+  --mount "type=bind,source=$PWD/results,target=/out" \
+  ad-performance-aggregator:local \
+  --input /data/ad_data.csv --output /out
+```
+
+The image defaults to non-root UID/GID 10001. The command above runs with the host user's UID/GID so the mounted output files are accessible to that user. If you omit `--user`, make the output directory writable by UID 10001. Keep the input mount read-only. Docker must be installed and its daemon running. To choose a different Linux target, add `--platform linux/amd64` or `--platform linux/arm64` to the `docker build` command.
+
+Run Go tests and static checks on the host with:
+
+```sh
+go test ./...
+go vet ./...
+```
+
+The Docker image is a runtime packaging option; it does not include the test suite or Go toolchain.
+
 ## Benchmark and memory
 
 The real input benchmark was run on 2026-10-23 with the existing `ad_data.csv`; the measured application runs did not generate or decompress the input. Input identity was 1,043,304,870 bytes (about 995 MiB), SHA-256 `4e9c87cc0b408f043917f5f7ee0101ba09899ad79f154358e9a2da374cfd60eb`, 26,843,544 data rows, and 50 distinct campaigns. The environment was macOS Darwin 27.0.0, arm64, 8 logical CPUs, 16 GiB RAM, and Go `go1.27.3 darwin/arm64`.

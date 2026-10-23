@@ -1,0 +1,20 @@
+.git
+.github
+.DS_Store
+
+# Input data and generated results must be mounted at runtime, not copied in.
+ad_data.csv*
+*.csv
+results/
+benchmarks/
+
+# Local build artifacts and profiling output.
+/aggregator
+/aggregator.exe
+/bin/
+*.pprof
+
+# Project notes are not needed to compile the executable.
+README.md
+PROMPTS.md
+IMPLEMENTATION_PLAN.md
