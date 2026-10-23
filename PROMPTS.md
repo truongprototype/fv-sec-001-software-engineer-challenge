@@ -118,3 +118,16 @@
 >
 > Hãy báo cáo kế hoạch trước, sau đó mới thực hiện các thay đổi tối thiểu cần thiết.
 
+
+> Hoàn thiện repository để bàn giao.
+>
+> Yêu cầu:
+>
+> - Xác nhận go test ./..., go vet ./... và build đều thành công.
+> - Tạo binary cho hệ điều hành và kiến trúc đích đã xác định.
+> - Kiểm tra binary thực sự chạy được với --input và --output.
+> - Làm lại README.md sạch: cài đặt, cách chạy, thiết kế, thư viện, benchmark và peak memory.
+> - Đảm bảo top10_ctr.csv và top10_cpa.csv được tạo từ dữ liệu thực, không phải dữ liệu minh họa.
+> - Kiểm tra các file bắt buộc và chất lượng Git diff.
+>
+> Không đưa số liệu chưa đo hoặc kết quả chưa xác minh vào tài liệu. Kết thúc bằng checklist bàn giao và các giới hạn còn tồn tại.

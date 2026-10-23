@@ -1,182 +1,111 @@
-# FV-SEC001 - Software Engineer Challenge — Ad Performance Aggregator
+# Ad Performance Aggregator
 
-## Go scaffold quick start
+A Go command-line program that streams an advertising CSV, aggregates metrics by campaign, and writes the highest-CTR and lowest-CPA rankings.
 
-This repository contains a Go CLI using only the standard library. From the repository root, process the CSV with:
+## Requirements
 
-```bash
+- Go 1.22 or later
+- Input CSV with the required header and columns described below
+
+The application uses only the Go standard library; there are no third-party Go dependencies.
+
+## Build and run
+
+Run directly from the repository root:
+
+```sh
 go run ./cmd/aggregator --input ad_data.csv --output results/
 ```
 
 Build a standalone binary with:
 
-```bash
+```sh
 go build -o aggregator ./cmd/aggregator
 ./aggregator --input ad_data.csv --output results/
 ```
 
-The command streams the input CSV, aggregates by campaign ID, and writes `top10_ctr.csv` and `top10_cpa.csv` in the output directory. It requires the CSV header and column order shown below. Malformed rows fail the run with row context. Undefined CPA values in the CTR ranking are written as empty CSV fields. Spend is parsed and summed as an exact decimal rational, then exported with at least two decimal places and any additional fractional digits needed to preserve its value. CPA is ranked as an exact rational and exported with at least two decimal places and up to 18 fractional places; results requiring more than 18 places, including repeating decimals, are rounded to 18 places. CTR is formatted to four decimal places.
+To target a different OS or architecture, set `GOOS` and `GOARCH` to the desired Go target values before `go build`. For example, `GOOS=darwin GOARCH=amd64` builds for Intel-based Macs. A cross-compiled binary should be run and verified on its target environment.
 
-Optional CPU profiling is available with `--cpuprofile FILE`. It is disabled unless the flag is supplied. See [benchmarks/README.md](benchmarks/README.md#cpu-profile) for a reproducible profile run and analysis commands.
+The output directory is created when needed. Existing result files are replaced. The command writes `top10_ctr.csv` and `top10_cpa.csv` there. Both `--input` and `--output` are required; invalid arguments, unreadable input, malformed CSV, and processing or output errors are reported to stderr with a nonzero exit status.
 
-## Introduction
-This is a data processing challenge for Developer candidates applying to our company.  
-You will work with a large CSV dataset (~1GB) containing advertising performance records.
+To get the input data, place `ad_data.csv` in the repository root. If starting from the supplied archive, extract it before running:
 
-The goal is to evaluate your ability to write clean code, handle large datasets efficiently, optimize performance/memory usage, and design a robust data-processing workflow.
-
----
-
-## Input Data
-
-### Download the Dataset
-
-1. Download the `ad_data.csv.zip` file from this repository folder
-2. Unzip it to get the `ad_data.csv` file (~1GB)
-3. Use this CSV file for your solution
-
-```bash
-# Example: Unzip the file
+```sh
 unzip ad_data.csv.zip
 ```
 
-### CSV Schema
+## Input and output
 
-| Column         | Type      | Description |
-|----------------|-----------|-------------|
-| campaign_id    | string    | Campaign ID |
-| date           | string    | Date in `YYYY-MM-DD` format |
-| impressions    | integer   | Number of impressions |
-| clicks         | integer   | Number of clicks |
-| spend          | float     | Advertising cost (USD) |
-| conversions    | integer   | Number of conversions |
+The CSV must have this exact header and column order:
 
-### Example:
+```csv
+campaign_id,date,impressions,clicks,spend,conversions
+```
 
-| campaign_id | date       | impressions | clicks | spend | conversions |
-|-------------|------------|-------------|--------|-------|-------------|
-| CMP001      | 2025-01-01 | 12000       | 300    | 45.50 | 12          |
-| CMP002      | 2025-01-01 | 8000        | 120    | 28.00 | 4           |
-| CMP001      | 2025-01-02 | 14000       | 340    | 48.20 | 15          |
-| CMP003      | 2025-01-01 | 5000        | 60     | 15.00 | 3           |
-| CMP002      | 2025-01-02 | 8500        | 150    | 31.00 | 5           |
+Each row is validated. Dates must be valid `YYYY-MM-DD` dates; counters must fit signed 64-bit integers; spend must be a decimal number. A malformed header or row fails the run and includes row context in the error. Quoted CSV fields are parsed using Go's CSV reader.
 
----
+The application sums impressions, clicks, spend, and conversions by `campaign_id`. It writes at most ten rows to each result file, with the columns:
 
-# 🎯 Task Requirements
+```text
+campaign_id,total_impressions,total_clicks,total_spend,total_conversions,CTR,CPA
+```
 
-You must build a **console application (CLI)** in any programming language (Python, NodeJS, Go, Java, Rust, etc.) that processes the CSV file and produces aggregated analytics.
+Top CTR is sorted highest first; Top CPA is sorted lowest first and excludes campaigns with zero conversions. Campaigns with zero impressions are omitted from Top CTR because CTR is undefined. If CPA is undefined for a campaign included in Top CTR, its CPA field is empty. Ties are ordered by campaign ID ascending. Fewer than ten eligible campaigns produce fewer than ten rows.
 
----
+Spend is parsed, summed, and compared as an exact decimal rational, avoiding binary floating-point accumulation error. Spend output preserves the exact terminating decimal value with at least two fractional digits. CPA ranking also uses exact rational comparison; CPA output has at least two and at most 18 fractional digits, with values requiring more precision rounded to 18 places. CTR is calculated and written to four decimal places.
 
-## 1. Aggregate data by `campaign_id`
+## Design
 
-For each `campaign_id`, compute:
+The input is processed in a single streaming pass. Parsed records are passed directly to an in-memory map keyed by campaign ID; the program retains campaign totals rather than all input rows. Ranking happens after EOF by sorting the campaign aggregates, then the selected rows are written as CSV. Working memory therefore depends on the number of distinct campaigns and the largest input record, rather than the total number of rows.
 
-- `total_impressions`
-- `total_clicks`
-- `total_spend`
-- `total_conversions`
-- `CTR` = total_clicks / total_impressions  
-- `CPA` = total_spend / total_conversions  
-  - If conversions = 0, ignore or return `null` for CPA
+Package responsibilities:
 
----
+- `cmd/aggregator`: CLI flags, argument validation, error exit behavior, and optional CPU profiling.
+- `internal/csvdata`: streaming CSV reading and field validation.
+- `internal/aggregate`: campaign totals, derived metrics, and deterministic rankings.
+- `internal/output`: CSV formatting and writing.
+- `internal/app`: orchestration of reading, aggregation, ranking, and output.
 
-## 2. Generate two result lists
+The CSV, CLI, file, exact arithmetic, and profiling facilities come from the Go standard library, including `encoding/csv`, `flag`, `math/big`, and `runtime/pprof`. No external Go library is used.
 
-### **A. Top 10 campaigns with the highest CTR**
+## Tests and verification
 
-Output as CSV format.
+Run the repository checks from its root:
 
-**Expected output format (`top10_ctr.csv`):**
+```sh
+go test ./...
+go vet ./...
+go build -o aggregator ./cmd/aggregator
+```
 
-| campaign_id | total_impressions | total_clicks | total_spend | total_conversions | CTR    | CPA   |
-|-------------|-------------------|--------------|-------------|-------------------|--------|-------|
-| CMP042      | 125000            | 6250         | 12500.50    | 625               | 0.0500 | 20.00 |
-| CMP015      | 340000            | 15300        | 30600.25    | 1530              | 0.0450 | 20.00 |
-| CMP008      | 890000            | 35600        | 71200.75    | 3560              | 0.0400 | 20.00 |
-| CMP023      | 445000            | 15575        | 31150.00    | 1557              | 0.0350 | 20.00 |
-| CMP031      | 670000            | 20100        | 40200.50    | 2010              | 0.0300 | 20.00 |
+A checked-in small fixture with expected outputs can be verified with:
 
-### **B. Top 10 campaigns with the lowest CPA**
+```sh
+sh benchmarks/run_fixture.sh
+```
 
-Output as CSV format. Exclude campaigns with zero conversions.
+## Benchmark and memory
 
-**Expected output format (`top10_cpa.csv`):**
+The real input benchmark was run on 2026-10-23 with the existing `ad_data.csv`; the measured application runs did not generate or decompress the input. Input identity was 1,043,304,870 bytes (about 995 MiB), SHA-256 `4e9c87cc0b408f043917f5f7ee0101ba09899ad79f154358e9a2da374cfd60eb`, 26,843,544 data rows, and 50 distinct campaigns. The environment was macOS Darwin 27.0.0, arm64, 8 logical CPUs, 16 GiB RAM, and Go `go1.27.3 darwin/arm64`.
 
-| campaign_id | total_impressions | total_clicks | total_spend | total_conversions | CTR    | CPA   |
-|-------------|-------------------|--------------|-------------|-------------------|--------|-------|
-| CMP007      | 450000            | 13500        | 13500.00    | 1350              | 0.0300 | 10.00 |
-| CMP019      | 780000            | 23400        | 23400.00    | 2340              | 0.0300 | 10.00 |
-| CMP033      | 290000            | 8700         | 10440.00    | 870               | 0.0300 | 12.00 |
-| CMP012      | 560000            | 16800        | 21840.00    | 1680              | 0.0300 | 13.00 |
-| CMP025      | 320000            | 9600         | 13440.00    | 960               | 0.0300 | 14.00 |
+Two unprofiled runs completed successfully in 21.302 s and 21.342 s wall time. Measured peak RSS was 12,959,744 bytes and 13,287,424 bytes, respectively (about 12.4–12.7 MiB). The second run measured 21.327 s user CPU and 0.674 s system CPU. Peak RSS and wall time were collected for the aggregator subprocess using Python `resource.getrusage` and `time.perf_counter`. These measurements include opening and reading the CSV, aggregation, ranking, and writing both result files; they exclude the separate counting and input-hash passes, build, and data extraction. They describe this machine and dataset, not a general performance guarantee.
 
----
+Reproduce the actual-input measurement and inspect its command, logs, environment, and output hashes:
 
-## 3. Technical Requirements
+```sh
+sh benchmarks/run_actual.sh
+```
 
-- The file is large (~1GB).  
-   **Your solution must handle large datasets efficiently with good performance and memory optimization.**
-- The program should be runnable via CLI, for example: `python aggregator.py --input ad_data.csv --output results/`
+The script writes benchmark artifacts under `benchmarks/`. The recorded outputs from that run and the handoff outputs under `results/` are real results from the identified input; their hashes are recorded in `benchmarks/output.sha256` and can be compared with:
 
----
+```sh
+shasum -a 256 results/top10_ctr.csv results/top10_cpa.csv
+```
 
-# 📬 Submission Instructions
+Optional CPU profiling is available with `--cpuprofile FILE`; it is off by default. See [benchmarks/README.md](benchmarks/README.md) for profile collection, pprof commands, and the captured profile observations. No code optimization was made based on the profile.
 
-Please submit your **GitHub repository link** via email to: **backoffice@flinters.vn**
+## Handoff files
 
-Your repository should include:
-
-1. **Source code** in a GitHub repository  
-2. Output result files:
-   - `top10_ctr.csv`
-   - `top10_cpa.csv`
-3. A **README.md** including:
-   - Setup instructions  
-   - How to run the program  
-   - Libraries used  
-   - Processing time for the 1GB file  
-   - Peak memory usage (if measured)
-4. *(Optional but recommended)*  
-   - Dockerfile  
-   - Benchmark logs  
-5. **(If used) `PROMPTS.md`** — see [AI Coding Assistants](#-ai-coding-assistants) section below
-
----
-
-## ✅ Code Quality Expectations
-
-Please write your code carefully. We expect:
-
-- **Correct results** — output must match expected values precisely
-- **Clean, readable code** — meaningful names, consistent style, no dead code or commented-out blocks
-- **Error handling** — handle missing files, malformed rows, and edge cases gracefully
-- **Performance awareness** — the input is ~1GB; your solution must be memory-efficient
-- **Tests** — include tests to verify your solution's correctness
-- **Documented decisions** — briefly explain non-obvious choices in your README
-
-
----
-
-## 🤖 AI Coding Assistants
-
-**We encourage you to use AI coding assistants** such as GitHub Copilot, Claude (Cursor AI, Cline), ChatGPT, or any other AI tools you prefer!
-
-### **If you use AI coding assistants:**
-Please include a **`PROMPTS.md`** file in the root of your repository. This helps us understand:
-- How you break down problems
-- Your communication with AI tools
-- Your problem-solving approach
-
-**Requirements for `PROMPTS.md`:**
-- Must be a file named exactly `PROMPTS.md` (no other format accepted)
-- Paste your prompts **as-is** — raw, unedited, exactly as you typed them
-- Do **not** clean up, polish, or rewrite your prompts before submitting
-
-This is **not mandatory** but **highly valued** as it demonstrates your ability to effectively leverage modern development tools.
-
----
-
-Good luck, and happy coding!
+- `results/top10_ctr.csv` and `results/top10_cpa.csv`: outputs generated from the real `ad_data.csv` input.
+- `benchmarks/`: fixture, measurement scripts, environment and runtime logs, output hashes, and CPU profile artifacts.
+- `PROMPTS.md`: prompts used while developing the project.
